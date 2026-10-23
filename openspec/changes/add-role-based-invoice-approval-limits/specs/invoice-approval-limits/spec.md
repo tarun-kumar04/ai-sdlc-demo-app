@@ -36,22 +36,29 @@ The system SHALL allow a Director to approve a pending invoice in the normal sin
 
 ### Requirement: Two distinct approvers for high-value invoices
 
-The system SHALL require two approvals from distinct users before an invoice above 500,000 is approved, and the second approver SHALL be a Director.
+The system SHALL require two approvals from distinct users before an invoice above 500,000 is approved, and the second approver SHALL be a Director. First-approver eligibility and the interim representation described below are proposed design assumptions, not confirmed assignment requirements, and SHALL be validated before Stage 2 implementation.
+
+#### Scenario: First approval is recorded without approving the invoice
+
+- **WHEN** a first approval is accepted for an invoice above 500,000 under a first-approver eligibility rule confirmed before Stage 2 implementation
+- **THEN** the system records the authenticated approver's identity, role, and timestamp, leaves the invoice `PendingApproval`, and leaves `DecidedBy` and `DecidedAt` unset for the final decision
+
+First-approver eligibility is provisional and must be confirmed against the assignment before Stage 2 implementation; Manager-or-Director-first is not an established assignment requirement.
 
 #### Scenario: Distinct Director completes high-value approval
 
 - **WHEN** a Director different from the first approver provides the second approval
-- **THEN** the invoice is approved
-
-#### Scenario: First approver attempts the second approval
-
-- **WHEN** the first approver attempts to count as the second approver
-- **THEN** the attempt is rejected with a clear reason and invoice state remains unchanged
+- **THEN** the system records the second approval, sets the final decision fields, and marks the invoice `Approved`
 
 #### Scenario: Non-Director attempts the second approval
 
 - **WHEN** a user who is not a Director attempts the second approval
-- **THEN** the attempt is rejected with a clear reason and invoice state remains unchanged
+- **THEN** the attempt is rejected with a clear reason and invoice state, approval history, and final-decision fields remain unchanged
+
+#### Scenario: First approver attempts to approve again
+
+- **WHEN** the user recorded as the first approver attempts the second approval
+- **THEN** the attempt is rejected with a clear reason and invoice status, approval history, and final-decision fields remain unchanged
 
 ### Requirement: Approval identity and role come from the authenticated session
 
