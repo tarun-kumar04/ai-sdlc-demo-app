@@ -28,10 +28,25 @@ public class ApprovalService
         return invoice;
     }
 
-    public Invoice Approve(string invoiceId, string approver)
+    public Invoice Approve(string invoiceId, string approver, string approverRole)
     {
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
+
+        var approvalLimit = approverRole switch
+        {
+            "Manager" => 50_000m,
+            "Director" => 500_000m,
+            _ => throw new InvalidOperationException(
+                $"Role '{approverRole}' is not authorized to approve invoices.")
+        };
+
+        if (invoice.Amount > approvalLimit)
+        {
+            throw new InvalidOperationException(
+                $"{approverRole} may approve invoices up to {approvalLimit:N0}; " +
+                $"invoice {invoice.Id} is {invoice.Amount:N2}.");
+        }
 
         invoice.Status = InvoiceStatus.Approved;
         invoice.DecidedBy = approver;
