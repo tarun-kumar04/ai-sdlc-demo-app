@@ -32,6 +32,11 @@ export class InvoiceApprovalPage {
     await this.page.getByRole('button', { name: `Approve invoice ${invoiceId}` }).click();
   }
 
+  async signOut(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(this.page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  }
+
   async getDecisionError(): Promise<string> {
     const alert = this.page.getByRole('alert').filter({ hasText: 'Manager may approve invoices up to' });
     await expect(alert).toBeVisible();
@@ -43,6 +48,7 @@ export class InvoiceApprovalPage {
     decidedBy: string | null;
     decidedAt: string | null;
     decisionNote: string | null;
+    approvalHistory: Array<{ approver: string; role: string; approvedAt: string }>;
   }> {
     return this.page.evaluate(async (id) => {
       const sessionValue = sessionStorage.getItem('session');
@@ -63,12 +69,14 @@ export class InvoiceApprovalPage {
         decidedBy: string | null;
         decidedAt: string | null;
         decisionNote: string | null;
+        approvalHistory: Array<{ approver: string; role: string; approvedAt: string }>;
       };
       return {
         status: invoice.status,
         decidedBy: invoice.decidedBy,
         decidedAt: invoice.decidedAt,
-        decisionNote: invoice.decisionNote
+        decisionNote: invoice.decisionNote,
+        approvalHistory: invoice.approvalHistory
       };
     }, invoiceId);
   }

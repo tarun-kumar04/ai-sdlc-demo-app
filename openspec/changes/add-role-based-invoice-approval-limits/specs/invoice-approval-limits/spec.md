@@ -36,14 +36,14 @@ The system SHALL allow a Director to approve a pending invoice in the normal sin
 
 ### Requirement: Two distinct approvers for high-value invoices
 
-The system SHALL require two approvals from distinct users before an invoice above 500,000 is approved, and the second approver SHALL be a Director. First-approver eligibility and the interim representation described below are proposed design assumptions, not confirmed assignment requirements, and SHALL be validated before Stage 2 implementation.
+The system SHALL require two approvals from distinct users before approving an invoice above 500,000; the second approver SHALL be a Director. The following first-approver and interim-representation details are user-authorized provisional implementation assumptions, not confirmed assignment requirements.
 
 #### Scenario: First approval is recorded without approving the invoice
 
-- **WHEN** a first approval is accepted for an invoice above 500,000 under a first-approver eligibility rule confirmed before Stage 2 implementation
+- **WHEN** either a Manager or Director provides the first approval for an invoice above 500,000 under the user-authorized provisional design assumption
 - **THEN** the system records the authenticated approver's identity, role, and timestamp, leaves the invoice `PendingApproval`, and leaves `DecidedBy` and `DecidedAt` unset for the final decision
 
-First-approver eligibility is provisional and must be confirmed against the assignment before Stage 2 implementation; Manager-or-Director-first is not an established assignment requirement.
+The assignment does not specify first-approver eligibility. Manager-or-Director-first is a provisional implementation assumption only, not an established assignment requirement.
 
 #### Scenario: Distinct Director completes high-value approval
 

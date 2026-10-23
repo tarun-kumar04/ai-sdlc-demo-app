@@ -20,7 +20,7 @@ The approval service currently approves any pending invoice with one approver, r
 
 - Either a Manager or Director may provide the first approval for an invoice above 500,000; the second approval must be by a different Director.
 - Record each accepted approval as history containing authenticated identity, role, and timestamp. After the first approval, keep the invoice `PendingApproval` and leave `DecidedBy`/`DecidedAt` for the final decision.
-- Validate these assumptions against the assignment and resolve them before Stage 2 implementation. They are design proposals, not confirmed requirements.
+- The user has authorized implementing these assumptions provisionally for Stage 2. They remain unconfirmed by the assignment and must not be presented as assignment requirements; retain these open questions and revise if authoritative clarification changes the design.
 
 ## Capabilities
 

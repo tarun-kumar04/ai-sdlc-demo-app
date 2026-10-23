@@ -12,6 +12,7 @@
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\InvoiceApp.Api\InvoiceApp.Api.csproj" />
     <ProjectReference Include="..\..\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj" />
   </ItemGroup>
 </Project>
