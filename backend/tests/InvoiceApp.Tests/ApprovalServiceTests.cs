@@ -93,7 +93,10 @@ public class ApprovalServiceTests
         var before = Snapshot(invoice);
         var (service, repository) = ServiceFor(invoice);
 
-        Assert.Throws<InvalidOperationException>(() => service.Submit("INV-1"));
+        var exception = Assert.Throws<InvalidOperationException>(() => service.Submit("INV-1"));
+
+        Assert.Contains("Invoice INV-1 is Approved", exception.Message);
+        Assert.Contains("only drafts can be submitted", exception.Message);
         AssertUnchanged(invoice, before, repository);
     }
 
@@ -133,6 +136,7 @@ public class ApprovalServiceTests
 
         Assert.Contains(role, exception.Message);
         Assert.Contains("may approve invoices up to", exception.Message);
+        Assert.Contains("invoice INV-1 is", exception.Message);
         AssertUnchanged(invoice, before, repository);
     }
 
@@ -303,6 +307,27 @@ public class ApprovalServiceTests
     }
 
     [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void Approve_RejectsPartialFinalDecisionMetadataWithoutMutation(
+        bool hasDecidedBy,
+        bool hasDecidedAt)
+    {
+        var invoice = InvoiceWith("INV-HIGH", InvoiceStatus.PendingApproval, 500_000.01m);
+        invoice.DecidedBy = hasDecidedBy ? "partial.approver" : null;
+        invoice.DecidedAt = hasDecidedAt ? DateTime.UtcNow : null;
+        invoice.DecisionNote = null;
+        var before = Snapshot(invoice);
+        var (service, repository) = ServiceFor(invoice);
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => service.Approve("INV-HIGH", "first.approver", "Manager"));
+
+        Assert.Contains("final decision fields set before approval is complete", exception.Message);
+        AssertUnchanged(invoice, before, repository);
+    }
+
+    [Theory]
     [InlineData(InvoiceStatus.Draft)]
     [InlineData(InvoiceStatus.Approved)]
     [InlineData(InvoiceStatus.Rejected)]
@@ -423,7 +448,10 @@ public class ApprovalServiceTests
         var before = Snapshot(invoice);
         var (service, repository) = ServiceFor(invoice);
 
-        Assert.Throws<ArgumentException>(() => service.Reject("INV-1", "demo.approver", "  "));
+        var exception = Assert.Throws<ArgumentException>(
+            () => service.Reject("INV-1", "demo.approver", "  "));
+
+        Assert.Contains("A reason is required to reject an invoice", exception.Message);
         AssertUnchanged(invoice, before, repository);
     }
 

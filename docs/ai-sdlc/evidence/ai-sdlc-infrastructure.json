@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "report_type": "workflow-evidence",
+  "created_at": "2026-10-24T14:59:15Z",
+  "summary": "AI-in-SDLC interaction logging, scoped historical import, workspace agents/skills, schemas, and verification evidence are in place. No invoice feature code was changed in this continuation; pre-existing user changes remain untouched.",
+  "findings": [
+    {
+      "id": "INF-01",
+      "severity": "high",
+      "title": "Imported metadata could retain credentials or unbounded values",
+      "file": "scripts/ai_interactions/log.py",
+      "line": 16,
+      "evidence": "Code Reviewer finding F-01; metadata redaction and 1,024-character bounds are now applied to source, session ID, and source reference. Synthetic tests cover generic token assignments and URL basic-auth values.",
+      "impact": "Credential-bearing metadata could otherwise be copied outside the content redactor or create oversized records.",
+      "recommendation": "Keep best-effort recursive redaction and metadata bounds, and review logs before external sharing.",
+      "verdict": "fixed",
+      "verdict_reason": "Implemented in the shared record constructor and covered by focused tests; redaction remains explicitly best effort."
+    },
+    {
+      "id": "INF-02",
+      "severity": "high",
+      "title": "Directory imports could traverse unrelated private records",
+      "file": "scripts/import_ai_interactions.py",
+      "line": 177,
+      "evidence": "Code Reviewer finding F-02; directory traversal now defaults to immediate children, nested traversal is opt-in via --recursive, and the canonical destination log is excluded.",
+      "impact": "Unbounded recursive ingestion could import data unrelated to the intended repository assignment.",
+      "recommendation": "Continue using explicit paths and dry-run before imports; only enable recursive traversal after reviewing the source tree.",
+      "verdict": "fixed",
+      "verdict_reason": "Importer behavior and tests now enforce explicit, nonrecursive default scope and destination exclusion."
+    },
+    {
+      "id": "INF-03",
+      "severity": "medium",
+      "title": "Summary strings and unknown event types could be misclassified",
+      "file": "scripts/import_ai_interactions.py",
+      "line": 45,
+      "evidence": "Code Reviewer finding F-05; string values such as \"false\" are rejected for is_summary and event types are checked against the supported set.",
+      "impact": "Incorrect labels weaken provenance and can make imported data misleading.",
+      "recommendation": "Keep strict JSON boolean and known-event validation for imports.",
+      "verdict": "fixed",
+      "verdict_reason": "Importer rejects invalid summary types and unsupported event types, with regression tests."
+    },
+    {
+      "id": "INF-04",
+      "severity": "medium",
+      "title": "Interaction rows and structured reports needed separate contracts",
+      "file": "docs/ai-sdlc/schemas/ai-interaction-record.schema.json",
+      "line": 1,
+      "evidence": "Code Reviewer finding F-04; a dedicated interaction schema was added and AGENTS.md now identifies the report schema separately.",
+      "impact": "Using a review-report schema for JSONL events would leave canonical records without a truthful machine-readable contract.",
+      "recommendation": "Validate the interaction log with the interaction schema and review artifacts with the report schema.",
+      "verdict": "fixed",
+      "verdict_reason": "Both contracts are now distinct, and the validator supports JSONL interaction records and report JSON."
+    },
+    {
+      "id": "INF-05",
+      "severity": "medium",
+      "title": "The original report validator accepted malformed JSON types",
+      "file": "scripts/validate_structured_report.py",
+      "line": 1,
+      "evidence": "Code Reviewer finding F-03; type-safe checks now cover booleans, arrays, date-time values, enum values, unexpected top-level fields, interaction records, and JSONL line diagnostics.",
+      "impact": "Malformed evidence could pass or crash validation rather than producing actionable errors.",
+      "recommendation": "Run the validator on every generated report and the canonical interaction log.",
+      "verdict": "fixed",
+      "verdict_reason": "Validator hardening is covered by tests, and the full current JSONL file was validated successfully."
+    },
+    {
+      "id": "INF-07",
+      "severity": "medium",
+      "title": "Interaction validator accepted fields outside the declared schema",
+      "file": "scripts/validate_structured_report.py",
+      "line": 97,
+      "evidence": "Final Code Reviewer finding R-01 identified that additionalProperties=false was not enforced by the custom interaction validator.",
+      "impact": "Nonconforming records could be reported valid even though they violate the interaction schema.",
+      "recommendation": "Reject unknown fields and add a regression test.",
+      "verdict": "fixed",
+      "verdict_reason": "Unknown fields are rejected and a test now verifies the behavior."
+    },
+    {
+      "id": "INF-08",
+      "severity": "medium",
+      "title": "Directory imports could follow symlinks outside the selected source tree",
+      "file": "scripts/import_ai_interactions.py",
+      "line": 183,
+      "evidence": "Final Code Reviewer finding R-02 identified that file symlinks could resolve outside the chosen directory.",
+      "impact": "An unrelated external transcript could be imported despite the nonrecursive default scope.",
+      "recommendation": "Reject symlinks and enforce resolved-path containment.",
+      "verdict": "fixed",
+      "verdict_reason": "Source symlinks are rejected, resolved entries are checked against the selected directory, and an external-symlink regression test was added."
+    },
+    {
+      "id": "INF-09",
+      "severity": "low",
+      "title": "Stop events could retain a local transcript path",
+      "file": "scripts/ai_interactions/log.py",
+      "line": 42,
+      "evidence": "Final Code Reviewer finding R-03 identified that transcript_path was included in normalized Stop event content.",
+      "impact": "Usernames and private local filesystem layout could be exposed in the canonical log.",
+      "recommendation": "Omit the local path from logged event content.",
+      "verdict": "fixed",
+      "verdict_reason": "The normalized Stop event now excludes transcript_path, with a regression test asserting the path is not stored."
+    },
+    {
+      "id": "INF-10",
+      "severity": "low",
+      "title": "Boolean timestamp values could be treated as Unix timestamps",
+      "file": "scripts/ai_interactions/log.py",
+      "line": 98,
+      "evidence": "Final reviewer finding INF-R1 noted Python treats bool as a subclass of int, so JSON true/false timestamps could be normalized as epoch seconds.",
+      "impact": "Malformed timestamps might appear as valid but misleading event times.",
+      "recommendation": "Classify booleans as unknown before numeric timestamp conversion.",
+      "verdict": "fixed",
+      "verdict_reason": "Boolean detection now precedes numeric parsing and a test covers both true and false values."
+    },
+    {
+      "id": "INF-06",
+      "severity": "low",
+      "title": "Concurrent append stress testing is not included",
+      "file": "scripts/ai_interactions/log.py",
+      "line": 181,
+      "evidence": "The append implementation uses an OS-level lock and deduplicates IDs while holding that lock, but tests currently exercise sequential retries rather than simultaneous processes.",
+      "impact": "A future platform-specific locking regression might not be detected by the current fixture suite.",
+      "recommendation": "Consider adding a bounded multi-process append test if concurrent hook delivery becomes a supported operational requirement.",
+      "verdict": "deferred",
+      "verdict_reason": "The current requirement is best-effort append/deduplication, the implementation is locked, and cross-platform stress behavior is outside this focused infrastructure completion."
+    }
+  ],
+  "checks": [
+    { "command": "python3 -m unittest discover -s tests/ai_sdlc -v", "result": "passed", "evidence": "21 tests passed, including final reviewer-fix regressions for symlink isolation, transcript path omission, additional interaction fields, and boolean timestamps." },
+    { "command": "dotnet test backend/InvoiceApp.sln", "result": "passed", "evidence": "86 succeeded, 0 failed, 0 skipped." },
+    { "command": "cd e2e && npm test", "result": "passed", "evidence": "5 Playwright tests passed." },
+    { "command": "openspec validate add-role-based-invoice-approval-limits", "result": "passed", "evidence": "OpenSpec reported the change is valid." },
+    { "command": "python3 scripts/validate_structured_report.py logs/ai-interactions.jsonl --kind interaction", "result": "passed", "evidence": "Every JSONL record present at the validation checkpoint passed interaction-record validation." },
+    { "command": "python3 scripts/validate_structured_report.py docs/ai-sdlc/evidence/ai-sdlc-infrastructure.json", "result": "passed", "evidence": "Evidence report validated against required fields, dispositions, types, and timestamps." },
+    { "command": "git diff --check", "result": "passed", "evidence": "No whitespace errors reported." },
+    { "command": "python3 -m unittest discover -s tests/ai_sdlc -v (initial run)", "result": "failed", "evidence": "Two new assertions were incorrect; both were fixed and the rerun passed. The initial attempt from e2e also used the wrong working directory." },
+    { "command": "New Copilot session hook verification", "result": "not-run", "evidence": "This session observed live prompt, tool, and subagent events, but could not verify startup/end/failure lifecycle hooks in a fresh session." }
+  ],
+  "sources": [
+    { "source": "Workspace specialist agents", "provenance": "Direct invocations: Workflow Orchestrator, Specification Analyst, Test Engineer, Mutation Testing Specialist, Code Reviewer; read-only findings reconciled during implementation.", "record_origin": "live_hook" },
+    { "source": "Historical Copilot session import", "provenance": "One explicitly scoped repository session; 49 historical user/assistant records imported, exact session/repository scope documented in docs/ai-sdlc/historical-sources.md.", "record_origin": "historical_import" },
+    { "source": "Live hook event log", "provenance": "Current session canonical JSONL: prompt, tool call/result, subagent start/result, and stop categories observed; startup/end/failure events not claimed.", "record_origin": "live_hook" },
+    { "source": "VS Code Copilot hook documentation", "provenance": "Supported hooks and workspace file locations informed by official VS Code documentation reviewed during this session.", "record_origin": "documented_summary" },
+    { "source": "Stryker.NET report files", "provenance": "Existing untracked StrykerOutput reports inspected by Mutation Testing Specialist; no fresh Stryker run was performed as part of this infrastructure task.", "record_origin": "documented_summary" }
+  ],
+  "limitations": [
+    "No ASSIGNMENT.md was present; repository instructions and the active OpenSpec artifacts were used, without inventing missing assignment content.",
+    "A new-session runtime test for all Copilot hook lifecycle events remains outstanding; current live evidence is limited to prompt, tool, and subagent event categories.",
+    "Redaction is best effort and cannot guarantee that all secrets are detected.",
+    "No Stryker run was performed during this infrastructure task; existing reports are historical evidence only.",
+    "The OpenSpec tasks checklist still shows planning/Stage 1/Stage 2 commit tasks incomplete. This work did not modify OpenSpec feature artifacts or create commits.",
+    "Pre-existing user changes to approval tests, additional test files, Stryker output, and .DS_Store files were preserved and are not attributed to this task."
+  ]
+}

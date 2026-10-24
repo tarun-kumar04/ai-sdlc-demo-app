@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-in-SDLC Structured Report",
+  "type": "object",
+  "required": ["schema_version", "report_type", "created_at", "summary", "findings", "checks", "sources"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "report_type": {
+      "enum": ["specification-compliance", "test-review", "mutation-analysis", "code-review", "interaction-import", "hook-verification", "workflow-evidence"]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "summary": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "evidence", "impact", "recommendation", "verdict", "verdict_reason"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "title": { "type": "string", "minLength": 1 },
+          "file": { "type": "string" },
+          "line": { "type": ["integer", "null"], "minimum": 1 },
+          "evidence": { "type": "string", "minLength": 1 },
+          "impact": { "type": "string", "minLength": 1 },
+          "recommendation": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["fixed", "dismissed", "deferred", "open", "not-applicable"] },
+          "verdict_reason": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "checks": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "sources": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -37,6 +37,17 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 - Test threshold boundaries, including values immediately below, at, and above 50,000 and 500,000. Cover repeated approvers, a non-Director second approver, invalid approval stages, and unchanged state after rejected attempts.
 - Keep the implementation in two stages and separate commits: Stage 1 implements normal single-approval limits and tests; Stage 2 implements the confirmed high-value two-approver workflow and tests.
 
+## AI-in-SDLC workflow
+
+- Use the active OpenSpec change for behavior changes. Keep the planning commit, Stage 1 implementation/test commit, and Stage 2 implementation/test commit separate; never rewrite or combine the feature stages.
+- Discover task-specific guidance in `.github/skills/<skill-name>/SKILL.md`. Use `openspec-compliance` for requirement/spec comparison, `approval-rule-testing` for approval behavior, `stryker-mutation-testing` for Stryker runs, `structured-code-review` for final diff review, and `ai-interaction-audit` for interaction-log auditing.
+- Delegate independent compliance, test, mutation, and read-only review work to the corresponding agents in `.github/agents/`. The Workflow Orchestrator must use the Copilot `task` delegation capability when available and record the actual delegated agents/results. If delegation is unavailable, document that limitation; do not claim agents ran.
+- Copilot hooks are configured in `.github/hooks/ai-interaction-audit.json` for supported session, prompt, tool, subagent, and stop events. Hook config or fixture tests are not proof of live execution; verify in a new Copilot session and record the observed event.
+- Canonical AI interaction JSONL is `logs/ai-interactions.jsonl`. Each record is validated against `docs/ai-sdlc/schemas/ai-interaction-record.schema.json`; structured review/evidence reports use `docs/ai-sdlc/schemas/structured-report.schema.json`. Interaction records carry source provenance, timestamp status, `record_origin`, summary labeling, and best-effort redaction. Never import unrelated private history or store credentials intentionally.
+- Historical import is explicit and scoped: review `docs/ai-sdlc/historical-sources.md`, then use `python3 scripts/import_ai_interactions.py` with explicit files or a repository-scoped session ID. Use dry-run first; imports must be idempotent and report rejected/unsupported inputs.
+- Use shared report templates in `docs/ai-sdlc/templates/`. Review findings need ID, severity, evidence, impact, recommendation, and `fixed`/`dismissed`/`deferred` disposition with rationale.
+- Before marking work complete, run and report actual relevant unit/E2E tests, OpenSpec validation, `git diff --check`, logging/import tests, and hook runtime verification where available. Distinguish configured, fixture-tested, and live-verified behavior; never claim an unexecuted check passed.
+
 ## Roles and demo accounts
 
 - Use `Manager` and `Director` as the only approval-policy role names. Do not introduce permanent `Approver`/`Admin` approval aliases or additional demo identities.
