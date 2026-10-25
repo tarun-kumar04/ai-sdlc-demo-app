@@ -8,3 +8,8 @@ node_modules/
 .env
 test-results/
 playwright-report/
+.venv-ai-sdlc/
+__pycache__/
+.pytest_cache/
+.DS_Store
+logs/ai-interactions.jsonl

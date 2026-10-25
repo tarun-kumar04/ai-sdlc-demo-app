@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Canonical AI Interaction Record",
+  "type": "object",
+  "required": ["event_id", "timestamp", "timestamp_status", "source", "event_type", "record_origin", "content", "source_reference", "redaction_applied", "is_summary"],
+  "properties": {
+    "event_id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": ["string", "null"], "format": "date-time" },
+    "timestamp_status": { "enum": ["known", "unknown"] },
+    "source": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "session_id": { "type": "string", "maxLength": 1024 },
+    "event_type": { "enum": ["session_start", "session_end", "prompt", "response", "tool_call", "tool_result", "tool_failure", "agent_start", "agent_result", "agent_stop", "error", "context_compaction", "documented_summary"] },
+    "record_origin": { "enum": ["historical_import", "live_hook", "documented_summary"] },
+    "content": { "type": "string", "maxLength": 12032 },
+    "source_reference": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "redaction_applied": { "type": "boolean" },
+    "is_summary": { "type": "boolean" },
+    "content_truncated": { "type": "boolean" }
+  },
+  "allOf": [
+    { "if": { "properties": { "timestamp_status": { "const": "known" } }, "required": ["timestamp_status"] }, "then": { "properties": { "timestamp": { "type": "string", "format": "date-time" } } } },
+    { "if": { "properties": { "timestamp_status": { "const": "unknown" } }, "required": ["timestamp_status"] }, "then": { "properties": { "timestamp": { "type": "null" } } } },
+    { "if": { "properties": { "record_origin": { "const": "documented_summary" } }, "required": ["record_origin"] }, "then": { "properties": { "is_summary": { "const": true } } } }
+  ],
+  "additionalProperties": false
+}
